@@ -42,27 +42,33 @@ public class JoinRequestRepository {
                             WHERE member.club_id = club.club_id
                             AND member.user_id = ?
                         )
-                    ORDER BY club.club_id;
+                    ORDER BY club.club_id
                 """;
 
         List<JoinRequestEntity> responseEntity = new ArrayList<>();
-        List<Map<String, Object>> joinRequestList = jdbcTemplate.queryForList(sql, paramEntity.getUserId(),
-                paramEntity.getUserId());
+        try {
+            List<Map<String, Object>> joinRequestList = jdbcTemplate.queryForList(sql, paramEntity.getUserId(),
+                    paramEntity.getUserId());
 
-        // リストが空だった場合
-        if (joinRequestList.isEmpty()) {
-            return responseEntity;
-        }
+            // リストが空だった場合
+            if (joinRequestList.isEmpty()) {
+                return responseEntity;
+            }
 
-        for (Map<String, Object> joinRequest : joinRequestList) {
+            for (Map<String, Object> joinRequest : joinRequestList) {
 
-            // entityに値をセットする
-            JoinRequestEntity joinData = new JoinRequestEntity();
-            joinData.setClubName((String) joinRequest.get("club_name"));
-            joinData.setClubDescription((String) joinRequest.get("club_description"));
-            joinData.setClubId((String) joinRequest.get("club_id"));
-            responseEntity.add(joinData);
+                // entityに値をセットする
+                JoinRequestEntity joinData = new JoinRequestEntity();
+                joinData.setClubName((String) joinRequest.get("club_name"));
+                joinData.setClubDescription((String) joinRequest.get("club_description"));
+                joinData.setClubId((String) joinRequest.get("club_id"));
+                responseEntity.add(joinData);
 
+            }
+        } catch (Exception e) {
+            // エラーが発生した場合はログを出力して例外を再スロー
+            e.printStackTrace();
+            throw e;
         }
 
         return responseEntity;
@@ -76,20 +82,20 @@ public class JoinRequestRepository {
          */
         String sql = """
                     INSERT INTO trn_join_request (
-                        user_id,
                         club_id,
+                        user_id,
                         leader_flg
                     ) VALUES (
                         ?,
                         ?,
                         ?
-                    );
+                    )
                 """;
 
         // entityから値をゲットする
         Object[] paramList = {
-                paramEntity.getUserId(),
                 paramEntity.getClubId(),
+                paramEntity.getUserId(),
                 paramEntity.isLeaderFlg() ? 1 : 0
         };
 
