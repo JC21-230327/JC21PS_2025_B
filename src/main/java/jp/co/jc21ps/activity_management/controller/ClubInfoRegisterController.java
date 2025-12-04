@@ -84,31 +84,52 @@ public class ClubInfoRegisterController {
         SessionDto sessionDto = commonService.getSessionDto(session);
         String leaderClubId = sessionDto.getClubId();
 
-        // バリデーション
-        /*
-         * TODO ➊ バリデーションエラーの際の処理を完成させる。
-         */
+        // バリデーションエラー
+        if (bindingResult.hasErrors()) {
+            // パラメータを返却用にセット(値を保持するため)
+            mav.addObject("clubInfoRegisterSaveForm", paramForm);
+            // セッションから取得したclubIdをleaderClubIdにセット
+            mav.addObject("leaderClubId", leaderClubId);
+            mav.setViewName("clubInfoRegister");
+            return mav;
+        }
 
         // セッションが切れた場合、エラー画面に遷移
-        if (leaderClubId.isEmpty()) {
+        if (leaderClubId == null || leaderClubId.isEmpty()) {
             mav.setViewName("error");
             return mav;
         }
 
         try {
             ClubInfoRegisterDto clubInfoRegisterDto = new ClubInfoRegisterDto();
-            /*
-             * TODO ➋ updateClubInfoメソッドの引数に使用しているclubInfoRegisterDtoに、パラメータを設定する。
-             */
+            // sessionから取得したclubIdをdtoにセット
+            clubInfoRegisterDto.setLeaderClubId(leaderClubId);
+            // paramFormから取得したclubDescriptionをdtoにセット
+            clubInfoRegisterDto.setClubDescription(paramForm.getClubDescription());
 
             String result = clubInfoRegisterService.updateClubInfo(clubInfoRegisterDto);
 
             // messages.propertiesからメッセージを取得
             String resultMessage = messageSource.getMessage(result, null, Locale.getDefault());
 
-            /*
-             * TODO ➌ resultの取得結果に応じて、遷移先を変更する。
-             */
+            // 更新処理の戻り値がupdateClubInfoの場合(=更新が成功した場合)
+            if ("updateClubInfo".equals(result)) {
+                // メッセージをModelAndViewに追加
+                mav.addObject("updateClubInfo", resultMessage);
+                // セッションから取得したclubIdをleaderClubIdにセット
+                mav.addObject("leaderClubId", leaderClubId);
+                // パラメータを返却用にセット(値を保持するため)
+                ClubInfoRegisterSaveForm responseForm = new ClubInfoRegisterSaveForm();
+                responseForm.setClubName(paramForm.getClubName());
+                responseForm.setClubDescription(paramForm.getClubDescription());
+                responseForm.setLeaderClubId(leaderClubId);
+                mav.addObject("clubInfoRegisterSaveForm", responseForm);
+                // 部署情報登録画面に遷移
+                mav.setViewName("clubInfoRegister");
+            } else {
+                // それ以外(=更新に失敗した場合)
+                mav.setViewName("error");
+            }
 
         } catch (Exception e) {
             // DB接続失敗した場合、エラー画面に遷移
