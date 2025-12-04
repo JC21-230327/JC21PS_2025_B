@@ -57,52 +57,58 @@ public class JoinRequestController {
         JoinRequestSaveForm form = new JoinRequestSaveForm();
         form.setUserId(userId);
 
-        // dtoに値をセット
-        JoinRequestDto joinRequestDto = new JoinRequestDto();
-        joinRequestDto.setUserId(userId);
+        try {
+            // dtoに値をセット
+            JoinRequestDto joinRequestDto = new JoinRequestDto();
+            joinRequestDto.setUserId(userId);
 
-        List<JoinRequestDto> joinRequestList = joinRequestService.findRequest(joinRequestDto);
-        List<JoinRequestSaveForm> responseForm = new ArrayList<>();
+            List<JoinRequestDto> joinRequestList = joinRequestService.findRequest(joinRequestDto);
+            List<JoinRequestSaveForm> responseForm = new ArrayList<>();
 
-        // formに値をセット
-        for (JoinRequestDto dto : joinRequestList) {
+            // formに値をセット
+            for (JoinRequestDto dto : joinRequestList) {
 
-            JoinRequestSaveForm saveData = new JoinRequestSaveForm();
-            saveData.setClubName(dto.getClubName());
-            saveData.setClubDescription(dto.getClubDescription());
-            saveData.setClubId(dto.getClubId());
+                JoinRequestSaveForm saveData = new JoinRequestSaveForm();
+                saveData.setClubName(dto.getClubName());
+                saveData.setClubDescription(dto.getClubDescription());
+                saveData.setClubId(dto.getClubId());
 
-            // responseFormにリストを追加
-            responseForm.add(saveData);
+                // responseFormにリストを追加
+                responseForm.add(saveData);
 
+            }
+            // リダイレクトされてきた登録申請成功のメッセージを、paramFormにセットする
+            paramForm.setMessage(joinOkMessage);
+
+            /*
+             * TODO ➊ 初期表示情報取得結果に応じて、以下の条件文を完成させる。
+             */
+            // 部が存在しない場合
+            if (joinRequestList.isEmpty()) {
+                // メッセージリソースからnotRequestClubMessageを取得
+                String notRequestClubMessage = messageSource.getMessage("notRequestClubMessage", null, Locale.getDefault());
+                // 取得したメッセージをModelAndViewに追加
+                mav.addObject("notRrequestClubMessage", notRequestClubMessage);
+                // formから取得したメッセージをModelAndViewに追加
+                mav.addObject("message", paramForm.getMessage());
+            } else {
+                // 部が存在する場合
+                // 部情報をModelAndViewに追加
+                mav.addObject("joinRequestSaveForm", responseForm);
+                // formから取得したメッセージをModelAndViewに追加
+                mav.addObject("joinRequestCompleteMessage", paramForm.getMessage());
+            }
+
+            mav.addObject("userId", form);
+            mav.addObject("leaderClubId", leaderClubId);
+
+            // 部員登録申請画面に遷移
+            mav.setViewName("joinRequest");
+        } catch (Exception e) {
+            // DB接続に失敗した場合、エラー画面に遷移
+            e.printStackTrace();
+            mav.setViewName("error");
         }
-        // リダイレクトされてきた登録申請成功のメッセージを、paramFormにセットする
-        paramForm.setMessage(joinOkMessage);
-
-        /*
-         * TODO ➊ 初期表示情報取得結果に応じて、以下の条件文を完成させる。
-         */
-        // 部が存在しない場合
-        if (joinRequestList.isEmpty()) {
-            // メッセージリソースからnotRrequestClubMessageを取得
-            String notRrequestClubMessage = messageSource.getMessage("notRrequestClubMessage", null, Locale.getDefault());
-            // 取得したメッセージをModelAndViewに追加
-            mav.addObject("notRrequestClubMessage", notRrequestClubMessage);
-            // formから取得したメッセージをModelAndViewに追加
-            mav.addObject("message", paramForm.getMessage());
-        } else {
-            // 部が存在する場合
-            // 部情報をModelAndViewに追加
-            mav.addObject("joinRequestSaveForm", responseForm);
-            // formから取得したメッセージをModelAndViewに追加
-            mav.addObject("joinRequestCompleteMessage", paramForm.getMessage());
-        }
-
-        mav.addObject("userId", form);
-        mav.addObject("leaderClubId", leaderClubId);
-
-        // 部員登録申請画面に遷移
-        mav.setViewName("joinRequest");
         return mav;
 
     }
@@ -153,8 +159,10 @@ public class JoinRequestController {
 
         } catch (Exception e) {
             // DB接続に失敗した場合、エラー画面に遷移
+            // DB接続に失敗した場合、エラー画面に遷移
             mav.setViewName("error");
         }
         return mav;
     }
 }
+
